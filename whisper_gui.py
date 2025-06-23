@@ -157,6 +157,31 @@ class WhisperTranscriber:
         minutes = int((seconds % 3600) // 60)
         seconds = seconds % 60
         return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}".replace('.', ',')
+        
+    def combine_srt(self, srt_parts):
+        """Combine multiple SRT segments into a single SRT file"""
+        combined = []
+        counter = 1
+        
+        for part in srt_parts:
+            # Split the SRT into individual subtitle blocks
+            blocks = part.strip().split('\n\n')
+            for block in blocks:
+                if not block.strip():
+                    continue
+                    
+                # Split the block into lines
+                lines = block.split('\n')
+                if len(lines) >= 3:  # At least number, timestamp, and text
+                    # Update the subtitle number
+                    combined.append(f"{counter}")
+                    # Keep the timestamp and text as is
+                    combined.append(lines[1])  # Timestamp
+                    combined.append('\n'.join(lines[2:]))  # Text (handle multi-line subtitles)
+                    combined.append('')  # Empty line between blocks
+                    counter += 1
+        
+        return '\n'.join(combined).strip()
 
 
 class WhisperGUI:
@@ -306,7 +331,7 @@ class WhisperGUI:
     
     def browse_file(self):
         filetypes = [
-            ("Audio/Video files", "*.mp3 *.wav *.m4a *.mp4 *.avi *.mkv"),
+            ("Audio/Video files", "*.mp3 *.wav *.m4a *.ogg *.mp4 *.avi *.mkv"),
             ("All files", "*.*")
         ]
         filename = filedialog.askopenfilename(filetypes=filetypes)
